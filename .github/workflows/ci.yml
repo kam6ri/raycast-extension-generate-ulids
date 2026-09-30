@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # @raycast/api 2.x requires >=22.22.2.
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # `ray lint` and `ray build` are deliberately not used here: they reach out
+      # to raycast.com to validate the author and fetch the manifest schema, and
+      # `ray build` opens Raycast over xdg-open once it finishes. Neither works on
+      # a headless runner, so the underlying tools are run directly instead.
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npx eslint src tests
+
+      - name: Format
+        run: npx prettier --check .
+
+      - name: Test
+        run: npm test
+
+      - name: Audit
+        run: npm audit --audit-level=high
