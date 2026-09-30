@@ -1,41 +1,17 @@
-import { closeMainWindow, showToast, Toast, Clipboard, showHUD } from "@raycast/api";
-import { ulid } from "ulid";
+import { showToast, Toast, Clipboard, showHUD, LaunchProps } from "@raycast/api";
+import { generateUlids, validateCount } from "./lib/ulids";
 
-function validateCount(input?: string): number {
-  if (!input) {
-    return 1;
-  }
-
-  const count = Number(input);
-  if (isNaN(count)) {
-    throw new Error("Input value must be a number");
-  }
-
-  if (!Number.isInteger(count)) {
-    throw new Error("Input value must be an integer");
-  }
-
-  if (count <= 0 || count > 1000000) {
-    throw new Error("Input value must be between 1 and 1,000,000");
-  }
-
-  return count;
-}
-
-export default async function Command(props: { arguments: { count: string } }) {
+export default async function Command(props: LaunchProps<{ arguments: Arguments.GenerateUlids }>) {
   try {
     const count = validateCount(props.arguments.count);
 
-    const ulids = Array.from({ length: count }, () => ulid());
+    // Already ascending: the generator is monotonic, so no sort is needed.
+    const ulids = generateUlids(count);
 
-    ulids.sort();
+    await Clipboard.copy(ulids.join("\n"));
 
-    const result = ulids.join("\n");
-    await Clipboard.copy(result);
-
+    // showHUD already hides the main window, so no extra closeMainWindow() is needed.
     await showHUD(`Copied ${count} ULID(s) to clipboard`);
-
-    await closeMainWindow();
   } catch (error) {
     await showToast({
       style: Toast.Style.Failure,

@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          # @raycast/api 2.x requires >=22.22.2.
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # `ray build` signals the running Raycast app through xdg-open when it
+      # finishes. With no such binary on the runner that spawn fails with
+      # ENOENT and takes the whole process down, so install it first. ray
+      # ignores xdg-open's exit code, so having no handler for raycast:// URLs
+      # is fine — the binary only has to exist.
+      - name: Install xdg-utils
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends xdg-utils
+
+      # Generates raycast-env.d.ts, which declares the `Arguments` and
+      # `Preferences` namespaces the source depends on. It is gitignored, so it
+      # has to be regenerated here before anything can typecheck.
+      - name: Build
+        run: npx ray build -e dist -I
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      # `ray lint` is deliberately not used: it calls raycast.com to validate
+      # the author and fetch the manifest schema, which needs `ray login`.
+      - name: Lint
+        run: npx eslint src tests
+
+      - name: Format
+        run: npx prettier --check .
+
+      - name: Test
+        run: npm test
+
+      - name: Audit
+        run: npm audit --audit-level=high

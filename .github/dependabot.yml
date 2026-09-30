@@ -1,0 +1,23 @@
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      # One PR per week for the toolchain instead of one per package.
+      dev-dependencies:
+        dependency-type: development
+    ignore:
+      # Pinned to the exact versions @raycast/api declares in peerDependencies.
+      # Bumping them independently breaks `npm ci` with ERESOLVE, so they move
+      # only when @raycast/api itself moves.
+      - dependency-name: "@types/node"
+      - dependency-name: "@types/react"
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
