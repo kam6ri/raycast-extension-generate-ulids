@@ -1,5 +1,7 @@
-import { closeMainWindow, showToast, Toast, Clipboard, showHUD } from "@raycast/api";
+import { showToast, Toast, Clipboard, showHUD, LaunchProps } from "@raycast/api";
 import { ulid } from "ulid";
+
+const MAX_COUNT = 1000000;
 
 function validateCount(input?: string): number {
   if (!input) {
@@ -15,14 +17,14 @@ function validateCount(input?: string): number {
     throw new Error("Input value must be an integer");
   }
 
-  if (count <= 0 || count > 1000000) {
-    throw new Error("Input value must be between 1 and 1,000,000");
+  if (count <= 0 || count > MAX_COUNT) {
+    throw new Error(`Input value must be between 1 and ${MAX_COUNT.toLocaleString("en-US")}`);
   }
 
   return count;
 }
 
-export default async function Command(props: { arguments: { count: string } }) {
+export default async function Command(props: LaunchProps<{ arguments: Arguments.GenerateUlids }>) {
   try {
     const count = validateCount(props.arguments.count);
 
@@ -33,9 +35,8 @@ export default async function Command(props: { arguments: { count: string } }) {
     const result = ulids.join("\n");
     await Clipboard.copy(result);
 
+    // showHUD already hides the main window, so no extra closeMainWindow() is needed.
     await showHUD(`Copied ${count} ULID(s) to clipboard`);
-
-    await closeMainWindow();
   } catch (error) {
     await showToast({
       style: Toast.Style.Failure,

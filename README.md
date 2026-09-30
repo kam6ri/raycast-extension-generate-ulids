@@ -3,6 +3,7 @@
 Raycast extension to generate ULIDs.
 
 ## Installation
+
 1. Install [Raycast](https://raycast.com/)
 2. Install [Node.js](https://nodejs.org/)
 3. Clone this repository
@@ -13,4 +14,3 @@ Raycast extension to generate ULIDs.
 8. Click "Add" to add the extension
 9. You should now see the extension in Raycast
 10. You can now use the extension by typing "ulid" in Raycast
-
