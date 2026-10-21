@@ -26,7 +26,7 @@
     }
   ],
   "dependencies": {
-    "@raycast/api": "^2.5.3",
+    "@raycast/api": "^2.8.2",
     "ulid": "^3.0.2"
   },
   "devDependencies": {
